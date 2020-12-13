@@ -63,7 +63,7 @@ public class AppMain {
         System.out.println( "Authenticating" );
         System.out.println("Please enter your username");
         for(int i = 0; i < MAX_AUTHENTICATE_ATTEMPTS; i++ ) {
-            String username = scanner.next();
+            String username = scanner.nextLine();
             if( userExists( username ) ) {
                 System.out.println( "Welcome back " + username );
                 return username;
@@ -84,7 +84,7 @@ public class AppMain {
     private void register() throws Exception {
         System.out.println( "Registering" );
         System.out.println( "Enter your username" );
-        String username = scanner.next();
+        String username = scanner.nextLine();
         if( userExists( username ) ) {
             System.out.println( "User already exists" );
         }

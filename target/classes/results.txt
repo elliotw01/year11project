@@ -1,11 +1,5 @@
-dave=9
-mikew=7
-jon=1
-cat=2
-bill=22
-chris=9
-dan=4
-jesus=32
 mikew=0
-mikew=1
-mikew=0
+mikew=3
+mikew=12
+bob=3
+elliotw=12

@@ -1,5 +1,9 @@
 package wood.elliot;
 
+import com.google.common.collect.ArrayListMultimap;
+import com.google.common.collect.Multimap;
+import com.google.common.collect.MultimapBuilder;
+
 import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
@@ -11,9 +15,12 @@ import java.util.stream.Stream;
 
 public class SongGame {
 
-    private final static String SONG_FILE = "songs.txt";
-    private final static String RESULTS_FILE = "results.txt";
-    private final static int MAX_GUESSES = 2;
+    private static final String SONG_FILE = "songs.txt";
+    private static final String RESULTS_FILE = "results.txt";
+    private static final int MAX_GUESSES = 2;
+    private static final int MAX_POINTS = 3;
+    private static final int MIN_POINTS = 1;
+    private static final int RESULTS_TO_SHOW = 5;
     public static final String DELIMITER = "=";
 
     Scanner scanner;
@@ -26,7 +33,7 @@ public class SongGame {
         songs = loadFile( SONG_FILE );
     }
 
-    private Map<String, String> loadFile(String fileName ) throws Exception{
+    private Map<String, String> loadFile( String fileName ) throws Exception{
         String rootPath = getClass().getClassLoader().getResource( "" ).getPath();
         File file = new File( rootPath + fileName );
 
@@ -55,8 +62,8 @@ public class SongGame {
                 System.out.println( "The artist is: " + artist );
                 System.out.println( "The first letters of the song are: " + songInitials );
                 String userGuess = scanner.nextLine();
-                if ( userGuess.toLowerCase().equals( song.toLowerCase() ) ) {
-                    int points = MAX_GUESSES - i;
+                if ( stripWhitespace( userGuess ).equalsIgnoreCase( stripWhitespace( song )) ) {
+                    int points = i == 0 ? MAX_POINTS : MIN_POINTS;
                     totalPoints += points;
                     break;
                 }
@@ -73,12 +80,33 @@ public class SongGame {
         showTop();
     }
 
+    private String stripWhitespace( String str ) {
+        return str.replaceAll("\\s+","" );
+    }
+
     private void showTop() throws Exception {
-        Map<String, String> results = loadFile( RESULTS_FILE );
-        results.entrySet().stream()
-                .sorted(Map.Entry.comparingByValue())
-                .limit(5)
-                .forEach(System.out::println);
+        List<GameResult> results = loadResults();
+        results.sort(Comparator.comparingInt(GameResult::getScore).reversed());
+
+        int toShow = Math.min(results.size(), RESULTS_TO_SHOW);
+
+        for( int i = 0 ; i < toShow ; i++ ) {
+            System.out.println( results.get( i ) );
+        }
+    }
+
+    private List<GameResult> loadResults() throws Exception{
+        String rootPath = getClass().getClassLoader().getResource( "" ).getPath();
+        File file = new File( rootPath + RESULTS_FILE );
+
+        List<GameResult> results = new ArrayList<>();
+
+        try (Stream<String> lines = Files.lines( file.toPath() ) ) {
+            lines.filter(line -> line.contains(DELIMITER)).forEach(
+                    line -> results.add(new GameResult( line.split(DELIMITER)[0], Integer.valueOf(line.split(DELIMITER)[1] ) ) )
+            );
+        }
+        return results;
     }
 
     private void updateResults(int totalPoints) throws IOException {
@@ -87,6 +115,7 @@ public class SongGame {
         BufferedWriter bw = new BufferedWriter(fw);
         bw.write(username + "=" + totalPoints);
         bw.newLine();
+        bw.flush();
         bw.close();
     }
 
@@ -108,7 +137,7 @@ public class SongGame {
         String[] myName = song.split(" ");
         StringBuilder initials = new StringBuilder();
         for (String s : myName) {
-            initials.append( s.charAt(0) + " " );
+            initials.append(s.charAt(0)).append(" ");
         }
         return initials.toString().trim();
     }
